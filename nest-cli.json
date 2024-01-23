@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/publisher/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/publisher/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/publisher",
+  "projects": {
+    "publisher": {
+      "type": "application",
+      "root": "apps/publisher",
+      "entryFile": "main",
+      "sourceRoot": "apps/publisher/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/publisher/tsconfig.app.json"
+      }
+    },
+    "handler": {
+      "type": "application",
+      "root": "apps/handler",
+      "entryFile": "main",
+      "sourceRoot": "apps/handler/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/handler/tsconfig.app.json"
+      }
+    },
+    "logger": {
+      "type": "application",
+      "root": "apps/logger",
+      "entryFile": "main",
+      "sourceRoot": "apps/logger/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/logger/tsconfig.app.json"
+      }
+    },
+    "rabbit-mq": {
+      "type": "library",
+      "root": "libs/rabbit-mq",
+      "entryFile": "index",
+      "sourceRoot": "libs/rabbit-mq/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/rabbit-mq/tsconfig.lib.json"
+      }
+    },
+    "mongoose": {
+      "type": "library",
+      "root": "libs/mongoose",
+      "entryFile": "index",
+      "sourceRoot": "libs/mongoose/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/mongoose/tsconfig.lib.json"
+      }
+    }
+  }
+}

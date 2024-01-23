@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmqctl', 'status']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  mongodb:
+    image: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  publisher:
+    build:
+      context: .
+      dockerfile: ./apps/publisher/Dockerfile
+    ports:
+      - '3000'
+    environment:
+      - MILLIS=1000
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+      - RABBIT_EXCHANGE=rabbit-exchange
+      - RABBIT_EXCHANGE_TYPE=topic
+      - HANDLER_QUEUE=handler-queue
+      - HANDLER_ROUTING_KEY=handler-route-key
+      - LOGGER_ROUTING_KEY=logger-route-key
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+
+  handler:
+    build:
+      context: .
+      dockerfile: ./apps/handler/Dockerfile
+    ports:
+      - '3001'
+    environment:
+      - MONGO_DB_URI=mongodb://mongodb/nest
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+      - RABBIT_EXCHANGE=rabbit-exchange
+      - RABBIT_EXCHANGE_TYPE=topic
+      - RPC_EXCHANGE=rpc-exchange
+      - RPC_EXCHANGE_TYPE=direct
+      - HANDLER_QUEUE=handler-queue
+      - HANDLER_ROUTING_KEY=handler-route-key
+      - RPC_QUEUE=rpc-queue
+      - RPC_ROUTING_KEY=rpc-route-key
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    deploy:
+      replicas: 3
+
+  logger:
+    build:
+      context: .
+      dockerfile: ./apps/logger/Dockerfile
+    ports:
+      - '3002:3002'
+    environment:
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+      - RABBIT_EXCHANGE=rabbit-exchange
+      - RABBIT_EXCHANGE_TYPE=topic
+      - RPC_EXCHANGE=rpc-exchange
+      - RPC_EXCHANGE_TYPE=direct
+      - LOGGER_QUEUE=logger-queue
+      - LOGGER_ROUTING_KEY=logger-route-key
+      - RPC_QUEUE=rpc-queue
+      - RPC_ROUTING_KEY=rpc-route-key
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+
+volumes:
+  rabbitmq_data:
+  mongo_data:
